@@ -68,7 +68,7 @@ function registerSkill(ctx: Context): void {
       provider: 'dsh-critical-decisions', source: 'bundled' as const, rank: BUNDLED_SKILL_RANK, locator: null,
     }]),
     async get(candidate: Record<string, unknown>, { signal }: { signal?: AbortSignal }) {
-      const content = await readFile(new URL('../skills/critical-decisions.md', import.meta.url), { encoding: 'utf8', signal })
+      const content = await readFile(new URL('./skills/critical-decisions.md', import.meta.url), { encoding: 'utf8', signal })
       return { ...candidate, content }
     },
   }))

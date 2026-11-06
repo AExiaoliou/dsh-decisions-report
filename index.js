@@ -54,7 +54,7 @@ function registerSkill(ctx) {
                 provider: 'dsh-critical-decisions', source: 'bundled', rank: BUNDLED_SKILL_RANK, locator: null,
             }]),
         async get(candidate, { signal }) {
-            const content = await readFile(new URL('../skills/critical-decisions.md', import.meta.url), { encoding: 'utf8', signal });
+            const content = await readFile(new URL('./skills/critical-decisions.md', import.meta.url), { encoding: 'utf8', signal });
             return { ...candidate, content };
         },
     }));
