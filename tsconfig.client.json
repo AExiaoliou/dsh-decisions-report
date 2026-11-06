@@ -1,0 +1,38 @@
+{
+  // Client build for this plugin: `src/client.ts` is a classic script whose
+  // only top-level statement registers the module on the browser's
+  // `globalThis.__ModuleLoader__`, so plain tsc output IS the runnable
+  // `client.js` bundle that `package.json` exports as `./client`.
+  //
+  //   build:  tsc -p tsconfig.client.json
+  //   check:  tsc -p tsconfig.client.json --noEmit
+  //
+  // Kept separate from `tsconfig.json` (the Host build, which compiles
+  // `src/index.ts` for Node into `.ts-build/`): the two halves have different
+  // module systems, libraries, and output locations.
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "es2022",
+    "lib": ["es2022", "dom"],
+    "types": [],
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitOverride": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "useUnknownInCatchVariables": true,
+    "skipLibCheck": true,
+    // Emit beside the manifest's `./client` export.
+    "rootDir": "src",
+    "outDir": ".",
+    "noEmitOnError": true,
+    "newLine": "lf",
+    "removeComments": false,
+    "declaration": false,
+    "sourceMap": false
+  },
+  // One entry file: the Host source (`src/index.ts`) belongs to the other build.
+  "files": ["src/client.ts"]
+}

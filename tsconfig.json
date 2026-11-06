@@ -1,0 +1,19 @@
+{
+  // Host build: compiles `src/index.ts` (Node ESM) into `.ts-build/`, which is
+  // copied over the root `index.js`. The browser half has its own build —
+  // `tsconfig.client.json` → root `client.js` — because a classic-script emit
+  // cannot share this program's module mode (NodeNext marks every file a
+  // module and appends `export {}`, which a classic script cannot parse).
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "allowJs": false,
+    "strict": false,
+    "skipLibCheck": true,
+    "noEmitOnError": false,
+    "rootDir": "src",
+    "outDir": ".ts-build"
+  },
+  "files": ["src/shims.d.ts", "src/index.ts"]
+}

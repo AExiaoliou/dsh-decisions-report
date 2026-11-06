@@ -1,0 +1,24 @@
+{
+  "name": "dsh-decisions-report",
+  "version": "1.0.0",
+  "private": false,
+  "type": "module",
+  "description": "Records agent critical decisions in the session view.",
+  "scripts": {
+    "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
+    "build:host": "tsc -p tsconfig.json",
+    "build:client": "tsc -p tsconfig.client.json",
+    "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit"
+  },
+  "files": ["index.js", "client.js", "src/**/*.ts", "src/**/*.d.ts", "tsconfig.json", "tsconfig.client.json", "tests/**/*.mjs", "cordis.patch.yml", "locale/*.json", "skills/*.md", "icon.svg"],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
+  },
+  "dsh": {
+    "bundle": { "patch": "./cordis.patch.yml" },
+    "client": { "platform": "web", "immediately": true, "inject": ["@deepseek-ai/dsh-client-ui-conversation", "@deepseek-ai/dsh-client-ui-session", "@deepseek-ai/dsh-client-ui-input-trigger"] }
+  }
+}

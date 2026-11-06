@@ -1,0 +1,4 @@
+- insert:
+    - id: dsh-decisions-report
+      name: '@local/dsh-decisions-report'
+      config: {}
