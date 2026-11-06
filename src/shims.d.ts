@@ -9,3 +9,16 @@ declare module '@deepseek-ai/cordis' {
 declare module '@deepseek-ai/dsh-skill' {
   export const BUNDLED_SKILL_RANK: number
 }
+
+declare module '@deepseek-ai/dsh-tools' {
+  export function defineTool(value: any): any
+}
+
+declare module '@deepseek-ai/dsh-session' {
+  export function appendPluginRecord(session: any, type: string, data: any): number
+  export function pluginRecordOf(event: any): any
+}
+
+declare module 'zod' {
+  export const z: any
+}

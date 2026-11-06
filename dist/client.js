@@ -7,7 +7,7 @@
  * Three contributions, all session-scoped:
  *
  * 1. `conversation.view` — the "Critical decisions" tab, a read-only projection
- *    of the `actionCards` key (proposals of `record_critical_decision` plus
+ *    of the `criticalDecisions` key (proposals of `record_critical_decision` plus
  *    their recorded decisions). Each card carries a "引用" button that inserts
  *    the stable decision reference as a structured composer chip through the
  *    public session-scope input face: `sessions.scope(sessionId)` borrows the
@@ -16,7 +16,7 @@
  *    replaces the caret span. The span snapshot comes from the standard
  *    `inputActions` prop; without it (host-less render) the button is inert.
  * 2. An `@` InputTrigger source — candidates are the decision cards of the
- *    *current* Session, read synchronously from its `actionCards` projection
+ *    *current* Session, read synchronously from its `criticalDecisions` projection
  *    (no RPC: the projection already reaches the client). A pick answers the
  *    structured `{ insert: ReferenceInsert }` outcome (`source: 'decision'`,
  *    `ref`/`clipboardText` = `@[<title>](dsh-decision:<callId>)`,
@@ -51,8 +51,9 @@
  *   (`InputHub.for` = `SessionInputResolver.for`)
  * - `packages/client/ui-conversation/src/client/apply.ts` (`uiSession.provide`
  *   publishes `props: ['inputActions']` to every session-scope slot entry)
- * - `packages/experimental/action-cards/src/types.ts` (`ActionCardView`,
- *   `SessionProjectionMap.actionCards`)
+ * - This package's Host half (`src/index.ts`) defines the local
+ *   `criticalDecisions` Session projection; the client consumes its value as
+ *   `{ proposals, decisions }`.
  * - `packages/api/session-controller/src/client/contract/sessions.ts`
  *   (`ISessions.binding`, `ISessions.scope`) and
  *   `sessions/service.ts` (`SessionBinding.ctx`)
@@ -145,7 +146,7 @@ globalThis.__ModuleLoader__.load({
             'reference.button': '引用',
         };
         // -----------------------------------------------------------------
-        // Projection readers (the `actionCards` value is the only source)
+        // Projection readers (the `criticalDecisions` value is the only source)
         // -----------------------------------------------------------------
         function isRecord(value) {
             return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -522,7 +523,7 @@ globalThis.__ModuleLoader__.load({
             }
             return h('article', {
                 style: styles.card,
-                'data-action-card': record.callId,
+                'data-critical-decision': record.callId,
                 'data-action': ACTION,
             }, h('header', { style: styles.cardHeader }, h('div', { style: styles.cardHeading }, h('h3', { style: styles.cardTitle }, title), typeof record.turn === 'number'
                 ? h('span', { style: styles.turn }, t('card.turn', { turn: record.turn }))
@@ -546,14 +547,14 @@ globalThis.__ModuleLoader__.load({
             }, t('reference.button')))), brief === undefined ? null : h('p', { style: styles.brief }, brief), rows.length === 0 ? null : h('dl', { style: styles.fields }, rows));
         }
         /**
-         * Session-scoped view over the actionCards projection: every recorded
+         * Session-scoped view over the criticalDecisions projection: every recorded
          * critical-decision card, read through the slot's standard `useProjection`.
          * Absent means the projection has not arrived (or its host unit is not
          * mounted); no "empty" claim is made until a value exists.
          */
         function CriticalDecisionsView(props) {
             const { useProjection, sessionId, sessions, inputActions, t } = props;
-            const view = useProjection('actionCards');
+            const view = useProjection('criticalDecisions');
             const records = cardRecordsOf(view);
             const ready = view !== undefined;
             return h('div', {
@@ -594,7 +595,7 @@ globalThis.__ModuleLoader__.load({
         // -----------------------------------------------------------------
         /**
          * Build the `@` source for one client context. Candidates are read
-         * synchronously from the Session's `actionCards` projection: the Host has
+         * synchronously from the Session's `criticalDecisions` projection: the Host has
          * already computed it, so opening the menu costs no RPC and a pick cannot
          * race a fetch.
          */
@@ -606,7 +607,7 @@ globalThis.__ModuleLoader__.load({
                 const binding = sessions.binding(sessionId);
                 if (binding === undefined)
                     return undefined;
-                const value = binding.session.projections.faceOf('actionCards').getSnapshot();
+                const value = binding.session.projections.faceOf('criticalDecisions').getSnapshot();
                 if (!isRecord(value))
                     return undefined;
                 return value;

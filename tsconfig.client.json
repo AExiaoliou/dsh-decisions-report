@@ -24,9 +24,9 @@
     "noUnusedParameters": true,
     "useUnknownInCatchVariables": true,
     "skipLibCheck": true,
-    // Emit beside the manifest's `./client` export.
+    // Emit into the package's runtime artifact directory.
     "rootDir": "src",
-    "outDir": ".",
+    "outDir": "dist",
     "noEmitOnError": true,
     "newLine": "lf",
     "removeComments": false,

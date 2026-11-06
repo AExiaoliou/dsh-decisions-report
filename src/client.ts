@@ -6,7 +6,7 @@
  * Three contributions, all session-scoped:
  *
  * 1. `conversation.view` — the "Critical decisions" tab, a read-only projection
- *    of the `actionCards` key (proposals of `record_critical_decision` plus
+ *    of the `criticalDecisions` key (proposals of `record_critical_decision` plus
  *    their recorded decisions). Each card carries a "引用" button that inserts
  *    the stable decision reference as a structured composer chip through the
  *    public session-scope input face: `sessions.scope(sessionId)` borrows the
@@ -15,7 +15,7 @@
  *    replaces the caret span. The span snapshot comes from the standard
  *    `inputActions` prop; without it (host-less render) the button is inert.
  * 2. An `@` InputTrigger source — candidates are the decision cards of the
- *    *current* Session, read synchronously from its `actionCards` projection
+ *    *current* Session, read synchronously from its `criticalDecisions` projection
  *    (no RPC: the projection already reaches the client). A pick answers the
  *    structured `{ insert: ReferenceInsert }` outcome (`source: 'decision'`,
  *    `ref`/`clipboardText` = `@[<title>](dsh-decision:<callId>)`,
@@ -50,8 +50,9 @@
  *   (`InputHub.for` = `SessionInputResolver.for`)
  * - `packages/client/ui-conversation/src/client/apply.ts` (`uiSession.provide`
  *   publishes `props: ['inputActions']` to every session-scope slot entry)
- * - `packages/experimental/action-cards/src/types.ts` (`ActionCardView`,
- *   `SessionProjectionMap.actionCards`)
+ * - This package's Host half (`src/index.ts`) defines the local
+ *   `criticalDecisions` Session projection; the client consumes its value as
+ *   `{ proposals, decisions }`.
  * - `packages/api/session-controller/src/client/contract/sessions.ts`
  *   (`ISessions.binding`, `ISessions.scope`) and
  *   `sessions/service.ts` (`SessionBinding.ctx`)
@@ -189,13 +190,13 @@ interface DshSessionInput {
   insertReference(reference: DshReferenceInsert, span: DshTokenSpan): boolean
 }
 
-/** `actionCards` projection value (`ActionCardView` in the host package). */
-interface DshActionCardView {
-  readonly proposals: Readonly<Record<string, DshActionCardProposal>>
-  readonly decisions: Readonly<Record<string, DshActionCardDecision>>
+/** `criticalDecisions` projection value (the Host half's `{ proposals, decisions }` shape). */
+interface DshCriticalDecisionsView {
+  readonly proposals: Readonly<Record<string, DshCriticalDecisionProposal>>
+  readonly decisions: Readonly<Record<string, DshCriticalDecisionRecord>>
 }
 
-interface DshActionCardProposal {
+interface DshCriticalDecisionProposal {
   readonly callId: string
   readonly turn: number
   readonly action: string
@@ -204,7 +205,7 @@ interface DshActionCardProposal {
   readonly details: Readonly<Record<string, unknown>>
 }
 
-interface DshActionCardDecision {
+interface DshCriticalDecisionRecord {
   readonly callId: string
   readonly action: string
   readonly phase: string
@@ -342,7 +343,7 @@ interface DshInputActions {
 
 interface DshViewProps {
   readonly sessionId: string
-  readonly useProjection: (key: 'actionCards') => DshActionCardView | undefined
+  readonly useProjection: (key: 'criticalDecisions') => DshCriticalDecisionsView | undefined
   /** Standard input actions; present for every session-scope slot entry, absent in host-less renders. */
   readonly inputActions?: DshInputActions | undefined
   /**
@@ -354,8 +355,8 @@ interface DshViewProps {
 }
 
 interface DshDecisionCardProps {
-  readonly record: DshActionCardProposal
-  readonly decision: DshActionCardDecision | undefined
+  readonly record: DshCriticalDecisionProposal
+  readonly decision: DshCriticalDecisionRecord | undefined
   readonly sessionId: string
   readonly sessions: DshSessionsService | undefined
   readonly inputActions: DshInputActions | undefined
@@ -480,7 +481,7 @@ interface DshStyles {
     }
 
     // -----------------------------------------------------------------
-    // Projection readers (the `actionCards` value is the only source)
+    // Projection readers (the `criticalDecisions` value is the only source)
     // -----------------------------------------------------------------
 
     function isRecord(value: unknown): value is Readonly<Record<string, unknown>> {
@@ -498,10 +499,10 @@ interface DshStyles {
     }
 
     /** Cards of this action, in durable turn order. */
-    function cardRecordsOf(view: DshActionCardView | undefined): readonly DshActionCardProposal[] {
+    function cardRecordsOf(view: DshCriticalDecisionsView | undefined): readonly DshCriticalDecisionProposal[] {
       if (view === undefined || !isRecord(view.proposals)) return []
       const proposals = view.proposals
-      const records: DshActionCardProposal[] = []
+      const records: DshCriticalDecisionProposal[] = []
       for (const key of Object.keys(proposals)) {
         const proposal = proposals[key]
         if (proposal === undefined) continue
@@ -517,9 +518,9 @@ interface DshStyles {
 
     /** Current decision state of one card, when the projection carries it. */
     function decisionOf(
-      view: DshActionCardView | undefined,
+      view: DshCriticalDecisionsView | undefined,
       callId: string,
-    ): DshActionCardDecision | undefined {
+    ): DshCriticalDecisionRecord | undefined {
       if (view === undefined || !isRecord(view.decisions)) return undefined
       if (!Object.prototype.hasOwnProperty.call(view.decisions, callId)) return undefined
       return view.decisions[callId]
@@ -527,8 +528,8 @@ interface DshStyles {
 
     /** Kind fields come from the decision record when present, else from the proposal. */
     function fieldsOf(
-      proposal: DshActionCardProposal,
-      decision: DshActionCardDecision | undefined,
+      proposal: DshCriticalDecisionProposal,
+      decision: DshCriticalDecisionRecord | undefined,
     ): DshDecisionFields {
       const details = isRecord(proposal.details) ? proposal.details : {}
       const data = decision !== undefined && isRecord(decision.data) ? decision.data : {}
@@ -542,7 +543,7 @@ interface DshStyles {
       }
     }
 
-    function phaseOf(decision: DshActionCardDecision | undefined): string | undefined {
+    function phaseOf(decision: DshCriticalDecisionRecord | undefined): string | undefined {
       return decision !== undefined && typeof decision.phase === 'string' ? decision.phase : undefined
     }
 
@@ -648,7 +649,7 @@ interface DshStyles {
     }
 
     /** Newest first: the menu is a recency list, the View keeps durable order. */
-    function decisionEntriesOf(view: DshActionCardView | undefined): readonly DshDecisionEntry[] {
+    function decisionEntriesOf(view: DshCriticalDecisionsView | undefined): readonly DshDecisionEntry[] {
       const entries = cardRecordsOf(view).map((record): DshDecisionEntry => {
         const fields = fieldsOf(record, decisionOf(view, record.callId))
         const title = stringOf(record.title) ?? ''
@@ -883,7 +884,7 @@ interface DshStyles {
 
       return h('article', {
         style: styles.card,
-        'data-action-card': record.callId,
+        'data-critical-decision': record.callId,
         'data-action': ACTION,
       },
         h('header', { style: styles.cardHeader },
@@ -921,14 +922,14 @@ interface DshStyles {
     }
 
     /**
-     * Session-scoped view over the actionCards projection: every recorded
+     * Session-scoped view over the criticalDecisions projection: every recorded
      * critical-decision card, read through the slot's standard `useProjection`.
      * Absent means the projection has not arrived (or its host unit is not
      * mounted); no "empty" claim is made until a value exists.
      */
     function CriticalDecisionsView(props: DshViewProps) {
       const { useProjection, sessionId, sessions, inputActions, t } = props
-      const view = useProjection('actionCards')
+      const view = useProjection('criticalDecisions')
       const records = cardRecordsOf(view)
       const ready = view !== undefined
       return h('div', {
@@ -987,21 +988,21 @@ interface DshStyles {
 
     /**
      * Build the `@` source for one client context. Candidates are read
-     * synchronously from the Session's `actionCards` projection: the Host has
+     * synchronously from the Session's `criticalDecisions` projection: the Host has
      * already computed it, so opening the menu costs no RPC and a pick cannot
      * race a fetch.
      */
     function createSource(sessions: DshSessionsService, t: DshTranslate): DshInputTriggerSource {
       const section = t('reference.section')
 
-      const projectionOf = (sessionId: string): DshActionCardView | undefined => {
+      const projectionOf = (sessionId: string): DshCriticalDecisionsView | undefined => {
         // No retained binding (session not open in this client) means no cards
         // to reference; the menu still opens, it just has nothing to offer.
         const binding = sessions.binding(sessionId)
         if (binding === undefined) return undefined
-        const value = binding.session.projections.faceOf('actionCards').getSnapshot()
+        const value = binding.session.projections.faceOf('criticalDecisions').getSnapshot()
         if (!isRecord(value)) return undefined
-        return value as unknown as DshActionCardView
+        return value as unknown as DshCriticalDecisionsView
       }
 
       return {

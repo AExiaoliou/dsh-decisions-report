@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": false,
   "type": "module",
+  "main": "dist/index.js",
   "description": "Records agent critical decisions in the session view.",
   "scripts": {
     "build": "tsc -p tsconfig.json && tsc -p tsconfig.client.json",
@@ -10,15 +11,47 @@
     "build:client": "tsc -p tsconfig.client.json",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.client.json --noEmit"
   },
-  "files": ["index.js", "client.js", "src/**/*.ts", "src/**/*.d.ts", "tsconfig.json", "tsconfig.client.json", "tests/**/*.mjs", "cordis.patch.yml", "locale/*.json", "skills/*.md", "icon.svg"],
+  "files": [
+    "dist/**/*.js",
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "tsconfig.json",
+    "tsconfig.client.json",
+    "tests/**/*.mjs",
+    "cordis.patch.yml",
+    "locale/*.json",
+    "skills/*.md",
+    "icon.svg"
+  ],
   "exports": {
-    ".": "./index.js",
-    "./client": "./client.js",
+    ".": "./dist/index.js",
+    "./client": "./dist/client.js",
     "./locale/*.json": "./locale/*.json",
     "./icon": "./icon.svg"
   },
   "dsh": {
-    "bundle": { "patch": "./cordis.patch.yml" },
-    "client": { "platform": "web", "immediately": true, "inject": ["@deepseek-ai/dsh-client-ui-conversation", "@deepseek-ai/dsh-client-ui-session", "@deepseek-ai/dsh-client-ui-input-trigger"] }
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "immediately": true,
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation",
+        "@deepseek-ai/dsh-client-ui-session",
+        "@deepseek-ai/dsh-client-ui-input-trigger"
+      ]
+    }
+  },
+  "dependencies": {
+    "zod": "4.4.3"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/dsh-session": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-skill": ">=0.2.2-rc.1",
+    "@deepseek-ai/dsh-tools": ">=0.2.2-rc.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
   }
 }

@@ -5,7 +5,7 @@
  * globals it touches — `globalThis.__ModuleLoader__` and the loader's
  * `require('react')` seed word — then drives the registered module against
  * fake Cordis services. It covers the parts that a type check cannot: the
- * registration shape, the `actionCards` → `@` candidate projection, the
+ * registration shape, the `criticalDecisions` → `@` candidate projection, the
  * stable mention a pick inserts, the userText rule that re-reads it, and the
  * `conversation.view` / `user.text.node` renderers.
  *
@@ -34,7 +34,7 @@ function createElement(type, props, ...children) {
 }
 const react = { createElement }
 
-await import(pathToFileURL(new URL('../client.js', import.meta.url).pathname).href)
+await import(pathToFileURL(new URL('../dist/client.js', import.meta.url).pathname).href)
 
 assert.equal(registrations.length, 1, 'bundle registers exactly one module')
 const registration = registrations[0]
@@ -105,7 +105,7 @@ const bindings = new Map([
   ['open-session', {
     session: {
       projections: {
-        faceOf: key => key === 'actionCards'
+        faceOf: key => key === 'criticalDecisions'
           ? { getSnapshot: () => projection, subscribe: () => () => {} }
           : unavailable,
       },
@@ -342,7 +342,10 @@ function textOf(node) {
 
 const view = resolve(viewSlot.component({
   sessionId: 'open-session',
-  useProjection: key => (key === 'actionCards' ? projection : undefined),
+  useProjection: key => {
+    assert.equal(key, 'criticalDecisions', 'the View reads the renamed session projection key')
+    return projection
+  },
   t: translate('dsh-critical-decisions'),
 }))
 const viewText = textOf(view)
